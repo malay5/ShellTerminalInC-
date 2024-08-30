@@ -106,6 +106,8 @@ int main() {
         return 1;
     }
 
+    bool inside_my_dir=true;
+
     char current_working_directory[8000];
     if (getcwd(current_working_directory, sizeof(current_working_directory)) != NULL) {
         std::cout << "Current working directory: " << current_working_directory << std::endl;
@@ -120,6 +122,9 @@ int main() {
     vector<string> path = {"~"};
 
     size_t prev_command_length = 0;
+
+    char* last_dir=current_working_directory;
+    vector<string> last_path={"~"};
 
     while (true) {
         string s;
@@ -181,16 +186,94 @@ int main() {
         if (s.rfind("cd ", 0) == 0) {
             string move_to = s.substr(3);
             if (move_to == "~") {
+
+                char prev_working_directory[8000];
+                        if (getcwd(prev_working_directory, sizeof(prev_working_directory)) != NULL) {
+                                // std::cout << "Current working directory: " << current_working_directory << std::endl;
+                            } else {
+                                perror("getcwd() error");
+                                return 1;
+                            }
+                        last_dir=prev_working_directory;
                 
                 if (chdir(current_working_directory)==0){
+                    last_path=path;
                     path = {"~"};
+                    
                 }
                 else{
                     cout << "ERROR: Could not change directory" << endl;
                 }
             }
             else if(move_to == "."){
+                // Do nothing
+                char prev_working_directory[8000];
+                        if (getcwd(prev_working_directory, sizeof(prev_working_directory)) != NULL) {
+                                // std::cout << "Current working directory: " << current_working_directory << std::endl;
+                            } else {
+                                perror("getcwd() error");
+                                return 1;
+                            }
+                        last_dir=prev_working_directory;
+                        last_path=path;
+                
+            }
+            else if(move_to == ".."){
+                if(inside_my_dir){
+                    if(path.size()==1){
+                        inside_my_dir=false;
+                    }
+                    else{
+                        char prev_working_directory[8000];
+                        if (getcwd(prev_working_directory, sizeof(prev_working_directory)) != NULL) {
+                                // std::cout << "Current working directory: " << current_working_directory << std::endl;
+                            } else {
+                                perror("getcwd() error");
+                                return 1;
+                            }
+                        if (chdir("..")==0){
+                            path.pop_back();
+                            
+                            
+                            last_dir=prev_working_directory;
+                            last_path=path;
+                        }
+                        else{
+                            cout << "ERROR: Could not change directory" << endl;
+                        }
 
+                        
+
+
+                    }
+                }else{
+
+                }
+            }
+            else if(move_to == "-"){
+                if(inside_my_dir){
+                    last_path,path=path,last_path;//To check, as this doesn't work
+
+                    char prev_working_directory[8000];
+    if (getcwd(prev_working_directory, sizeof(prev_working_directory)) != NULL) {
+        // std::cout << "Current working directory: " << current_working_directory << std::endl;
+    } else {
+        perror("getcwd() error");
+        return 1;
+    }
+
+                    char* temp=prev_working_directory;
+                    if (chdir(last_dir)==0){
+                        // path = {"~"}
+                        last_dir=temp;
+                    }
+                    else{
+                        cout << "ERROR: Could not change directory" << endl;
+                    }
+                }
+                else{
+
+                }
             }
              else {
                 trim(move_to);
