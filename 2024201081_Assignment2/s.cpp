@@ -15,23 +15,33 @@ string trim(const string &str) {
     return str.substr(start, end - start + 1);
 }
 
-string process_echo(string s){
-    bool escape_character_present=false;
-    string res="";
-    for(auto c:s){
-        if(escape_character_present){
-            if(c=='n'){
-                res+="\n";
-            }else{
-                res+='\\'<<c;
+string process_echo(string s) {
+    bool escape_character_present = false;
+    string res = "";
+    for (auto c : s) {
+        if (escape_character_present) {
+            
+            if(c=='\\'){
+                res+='\\';
             }
+            else if(c=='\''){
+                res+='\'';
+            }
+            else if(c=='\"'){
+                res+='\"';
+            }
+             else {
+                res += c;
+            }
+            escape_character_present = false;
+        } else if (c == '\\') {
+            escape_character_present = true;
+        }
+        else if(c=='\'' || c=='\"'){
             escape_character_present=false;
         }
-        else if(c=='\\'){
-            escape_character_present=true;
-        }
-        else{
-            res+=c;
+         else {
+            res += c;
         }
     }
     return res;
@@ -80,13 +90,13 @@ void print_prompt(const string &user, const string &hostname, const vector<strin
     cout << "\r" << prompt;
 
     // Clear any remaining characters from the previous command
-    size_t extra_spaces = prev_command_length > current_command.length() ? prev_command_length - current_command.length() : 0;
+    size_t extra_spaces = 100;
     cout << string(extra_spaces, ' ') << "\r" << prompt;
 
     fflush(stdout);
 }
 
-int main(){
+int main() {
     set_terminal_mode();
     atexit(reset_terminal_mode);
 
@@ -95,6 +105,15 @@ int main(){
         perror("gethostname");
         return 1;
     }
+
+    char current_working_directory[8000];
+    if (getcwd(current_working_directory, sizeof(current_working_directory)) != NULL) {
+        std::cout << "Current working directory: " << current_working_directory << std::endl;
+    } else {
+        perror("getcwd() error");
+        return 1;
+    }
+
     string user = getenv("USER");
     size_t history_index = 0;
     vector<string> history;
@@ -102,7 +121,7 @@ int main(){
 
     size_t prev_command_length = 0;
 
-    while(1) {
+    while (true) {
         string s;
         char ch;
         print_prompt(user, hostname, path, s, prev_command_length);
@@ -133,12 +152,9 @@ int main(){
                         if (history_index < history.size() - 1) {
                             history_index++;
                             s = history[history_index];
-                        }
-                        else{
-                            s="";
+                        } else if (history_index == history.size() - 1) {
                             history_index++;
-                            print_prompt(user, hostname, path, s, prev_command_length);
-
+                            s = "";
                         }
                     }
                     print_prompt(user, hostname, path, s, prev_command_length);
@@ -165,8 +181,18 @@ int main(){
         if (s.rfind("cd ", 0) == 0) {
             string move_to = s.substr(3);
             if (move_to == "~") {
-                path = {"~"};
-            } else {
+                
+                if (chdir(current_working_directory)==0){
+                    path = {"~"};
+                }
+                else{
+                    cout << "ERROR: Could not change directory" << endl;
+                }
+            }
+            else if(move_to == "."){
+
+            }
+             else {
                 trim(move_to);
                 if (chdir(move_to.c_str()) == 0) {
                     path.push_back(move_to);
