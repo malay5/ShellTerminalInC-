@@ -1,0 +1,10 @@
+ls
+ls
+ls
+nano &
+nano &
+pinfo 16740
+fg 16740
+sleep 5
+ls
+cd ..

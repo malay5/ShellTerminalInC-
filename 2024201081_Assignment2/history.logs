@@ -1,0 +1,20 @@
+ls -l -a
+ls
+ls -l ~ -a ..
+nano &
+ps
+nano &
+ps
+ls
+ls -la Hello/ ~
+echo Hello > input.txt
+nano &
+ps
+nano &
+ps
+nano &
+ps
+history &
+nano &
+ps
+fg 5656565

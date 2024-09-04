@@ -17,39 +17,6 @@ using namespace std;
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class LsCommand {
 public:
     void execute(const vector<string>& args,string current_working_dir) {
@@ -467,10 +434,19 @@ int main() {
         for (const auto& command : s_commands) {
             string s = trim(command);
 
+                bool is_background = false;
+
+            
+
+
             vector<string> p_commands = custom_split(s,'|');
             int num_pipes = p_commands.size() - 1;
+
+            int pipefd[2];
+            int input_fd = 0;
             
             for (size_t i = 0; i < p_commands.size(); ++i) {
+                pipe(pipefd);
                 pid_t pid = fork();
                 string s = trim(p_commands[i]);
                 if (pid == -1) {
@@ -480,17 +456,16 @@ int main() {
 
                 if (pid == 0) {
 
-                    int in_fd = (i == 0) ? -1 : pipe_fds[(i - 1) * 2];
-                    int out_fd = (i == num_pipes) ? -1 : pipe_fds[i * 2 + 1];
+                    dup2(input_fd, 0);  // Redirect input from previous command
+                    if (i < p_commands.size() - 1) {
+                        dup2(pipefd[1], 1);  // Redirect output to the pipe
+                    }
+                    close(pipefd[0]);
 
-                    if (in_fd != -1) {
-                        dup2(in_fd, STDIN_FILENO);
-                        close(in_fd);
-                    }
-                    if (out_fd != -1) {
-                        dup2(out_fd, STDOUT_FILENO);
-                        close(out_fd);
-                    }
+                    input_fd = pipefd[0];  // Set input for the next command
+
+
+                    
 
                     if (s == "exit") {
             cout << "Thank you for using the shell" << endl;
@@ -672,9 +647,6 @@ int main() {
                     wait(nullptr);
                 }
 
-                for (auto fd : pipe_fds) {
-                    close(fd);
-                }
 
         
     //     if (s == "exit") {
